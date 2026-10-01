@@ -1,15 +1,8 @@
-# 1단계: 빌드 스테이지 (도커 환경에 기본 탑재된 mvn 명령어 사용)
-FROM mcr.microsoft.com/playwright/java:v1.40.0-jammy AS build
-WORKDIR /app
-COPY . .
-
-# 일반 mvn으로 깔끔하게 빌드
-RUN mvn clean package -DskipTests
-
-# 2단계: 실행 스테이지 (가벼운 실행 환경에 빌드된 파일만 쏙 가져옴)
 FROM mcr.microsoft.com/playwright/java:v1.40.0-jammy
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+
+# 서버에서 빌드 안 함! 내 컴퓨터에서 만든 jar 파일을 그대로 복사해서 실행
+COPY target/ship-0.0.1-SNAPSHOT.jar app.jar
 
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
