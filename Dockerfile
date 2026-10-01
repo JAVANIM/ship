@@ -1,10 +1,20 @@
+# 1단계: 빌드 스테이지 (Maven과 Java가 설치된 환경에서 소스코드를 직접 빌드)
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
+WORKDIR /build
+
+# pom.xml과 소스 코드를 복사
+COPY pom.xml .
+COPY src ./src
+
+# 외부 서버 메모리 부하를 줄이기 위해 데몬 빌드 수행
+RUN mvn clean package -DskipTests
+
+# 2단계: 실행 스테이지 (Playwright와 가벼운 자바 런타임 환경)
 FROM mcr.microsoft.com/playwright/java:v1.40.0-jammy
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
-# 구글 드라이브 대용량 파일 경고를 무시하고 순수 jar 파일만 다이렉트로 강제 다운로드
-RUN curl -L "https://drive.google.com/uc?export=download&confirm=t&id=1GhTnvTkwfgRw121Vucmj9ZVeBqrEthlN" -o app.jar
+# 1단계 빌드 결과물(target 폴더 안의 jar)만 쏙 복사해옴
+COPY --from=builder /build/target/*.jar app.jar
 
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
