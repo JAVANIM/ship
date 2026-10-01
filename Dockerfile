@@ -1,8 +1,10 @@
-# 1단계: 빌드 스테이지 (Maven과 Java로 프로젝트를 직접 빌드)
+# 1단계: 빌드 스테이지 (도커 환경에 기본 탑재된 mvn 명령어 사용)
 FROM mcr.microsoft.com/playwright/java:v1.40.0-jammy AS build
 WORKDIR /app
 COPY . .
-RUN ./mvnw clean package -DskipTests
+
+# 복잡한 래퍼(mvnw)나 숨김 폴더(.mvn) 없이 일반 mvn으로 깔끔하게 빌드
+RUN mvn clean package -DskipTests
 
 # 2단계: 실행 스테이지 (가벼운 실행 환경에 빌드된 파일만 쏙 가져옴)
 FROM mcr.microsoft.com/playwright/java:v1.40.0-jammy
