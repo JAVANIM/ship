@@ -2,6 +2,8 @@
 FROM mcr.microsoft.com/playwright/java:v1.40.0-jammy AS build
 WORKDIR /app
 COPY . .
+RUN chmod +x mvnw
+
 RUN ./mvnw clean package -DskipTests
 
 # 2단계: 실행 스테이지 (가벼운 실행 환경에 빌드된 파일만 쏙 가져옴)
