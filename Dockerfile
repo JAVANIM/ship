@@ -8,7 +8,7 @@ RUN mvn clean package -DskipTests
 # 2단계: 실행 스테이지
 FROM eclipse-temurin:21-jre-jammy
 
-# Playwright 브라우저 실행에 필요한 시스템 라이브러리 (존재하지 않는 패키지 제외 완료)
+# Playwright 브라우저 실행에 필요한 시스템 라이브러리 (필수 패키지 추가 완료)
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libnss3 \
@@ -42,6 +42,11 @@ RUN apt-get update && apt-get install -y \
     fonts-liberation \
     libu2f-udev \
     libvulkan1 \
+    libgtk-3-0 \
+    libxcursor1 \
+    libpangocairo-1.0-0 \
+    libcairo-gobject2 \
+    libgdk-pixbuf-2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
