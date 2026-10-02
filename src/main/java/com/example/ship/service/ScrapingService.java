@@ -312,29 +312,37 @@ public class ScrapingService {
             Page page = browser.newPage();
             page.navigate("https://svc.pncport.com/info/CMS/Ship/Info.pnc?mCode=MN014");
 
-            // PNC는 데이터가 로드될 때까지 충분히 대기 (테이블 안의 tr이 나타날 때까지 대기)
+            // 테이블 로딩 대기
             try {
                 page.waitForSelector("table tbody tr, table tr", new Page.WaitForSelectorOptions().setTimeout(10000));
             } catch (Exception e) {
-                // 타임아웃 발생 시 추가 대기
+                // 무시
             }
-            page.waitForTimeout(3000); // 안정화 대기
+            page.waitForTimeout(3000);
 
             String htmlContent = page.content();
             browser.close();
 
             Document doc = Jsoup.parse(htmlContent);
             Elements rows = doc.select("table tbody tr, table tr");
+            
+            System.out.println(">>> [PNC 디버깅] 감지된 전체 행 개수: " + rows.size());
 
             for (Element row : rows) {
-                Elements cols = row.select("td"); // th 제외하고 td만 추출해야 헤더가 안 섞입니다!
+                Elements cols = row.select("td");
 
-                if (cols.size() >= 10) {
-                    String shipName = cols.get(1).text().trim(); 
-                    String trCode   = cols.get(2).text().trim(); 
-                    String eta      = cols.get(7).text().trim(); 
-                    String etd      = cols.get(8).text().trim(); 
-                    String berth    = cols.get(9).text().trim(); 
+                // 디버깅용: 행의 텍스트가 비어있지 않다면 내용 출력해보기
+                if (!row.text().trim().isEmpty()) {
+                    System.out.println(">>> [PNC Row 텍스트]: " + row.text().trim() + " (td 개수: " + cols.size() + ")");
+                }
+
+                // 만약 컬럼 수가 10개가 안 되거나 다를 수 있으므로 조건을 낮춰서 확인
+                if (cols.size() >= 5) { 
+                    String shipName = cols.size() > 1 ? cols.get(1).text().trim() : ""; 
+                    String trCode   = cols.size() > 2 ? cols.get(2).text().trim() : ""; 
+                    String eta      = cols.size() > 7 ? cols.get(7).text().trim() : ""; 
+                    String etd      = cols.size() > 8 ? cols.get(8).text().trim() : ""; 
+                    String berth    = cols.size() > 9 ? cols.get(9).text().trim() : ""; 
 
                     if (!shipName.isEmpty() && !shipName.contains("모선명") && !shipName.contains("선명") 
                         && !shipName.contains("조회된") && !shipName.contains("Total")) {
@@ -345,6 +353,9 @@ public class ScrapingService {
                     }
                 }
             }
+
+            System.out.println("=== PNC 최종 파싱 결과 개수: " + list.size() + "개 ===")
+
         } catch (Exception e) {
             System.err.println("PNC 스크래핑 오류: " + e.getMessage());
             e.printStackTrace();
