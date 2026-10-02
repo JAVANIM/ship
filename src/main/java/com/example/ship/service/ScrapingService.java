@@ -300,7 +300,7 @@ public class ScrapingService {
     // ############PNC
     
     
-    private List<VesselInfoDto> scrapePncWithPlaywright(String keyword) {
+   private List<VesselInfoDto> scrapePncWithPlaywright(String keyword) {
         List<VesselInfoDto> list = new ArrayList<>();
         String searchWord = (keyword != null) ? keyword.trim() : "";
 
@@ -310,45 +310,41 @@ public class ScrapingService {
             );
 
             Page page = browser.newPage();
-
-            // System.out.println(">>> Playwright로 PNC 페이지 접속 중...");
             page.navigate("https://svc.pncport.com/info/CMS/Ship/Info.pnc?mCode=MN014");
 
-            page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
-            page.waitForTimeout(2000);
+            // PNC는 데이터가 로드될 때까지 충분히 대기 (테이블 안의 tr이 나타날 때까지 대기)
+            try {
+                page.waitForSelector("table tbody tr, table tr", new Page.WaitForSelectorOptions().setTimeout(10000));
+            } catch (Exception e) {
+                // 타임아웃 발생 시 추가 대기
+            }
+            page.waitForTimeout(3000); // 안정화 대기
 
             String htmlContent = page.content();
             browser.close();
 
-            // Jsoup 파싱
             Document doc = Jsoup.parse(htmlContent);
             Elements rows = doc.select("table tbody tr, table tr");
 
             for (Element row : rows) {
-                Elements cols = row.select("td");
+                Elements cols = row.select("td"); // th 제외하고 td만 추출해야 헤더가 안 섞입니다!
 
-                // PNC 유효 데이터 행은 td가 10개 이상입니다.
                 if (cols.size() >= 10) {
-                    String shipName = cols.get(1).text().trim(); // 1번: 모선명 (MAERSK NOTODDEN)
-                    String trCode   = cols.get(2).text().trim(); // 2번: 모선코드 / TR (NTOD-008/2026)
-                    String eta      = cols.get(7).text().trim(); // 7번: 접안(예정)일시
-                    String etd      = cols.get(8).text().trim(); // 8번: 출항(예정)일시
-                    String berth    = cols.get(9).text().trim(); // 9번: 선석 (B4)
+                    String shipName = cols.get(1).text().trim(); 
+                    String trCode   = cols.get(2).text().trim(); 
+                    String eta      = cols.get(7).text().trim(); 
+                    String etd      = cols.get(8).text().trim(); 
+                    String berth    = cols.get(9).text().trim(); 
 
-                    // 헤더 및 안내 문구 스킵
                     if (!shipName.isEmpty() && !shipName.contains("모선명") && !shipName.contains("선명") 
                         && !shipName.contains("조회된") && !shipName.contains("Total")) {
 
-                        // 자바 2단계 키워드 필터링
                         if (searchWord.isEmpty() || shipName.toUpperCase().contains(searchWord.toUpperCase())) {
                             list.add(new VesselInfoDto("PNC", shipName, trCode, eta, etd, berth));
                         }
                     }
                 }
             }
-
-             System.out.println("=== PNC 파싱 결과 개수: " + list.size() + "개 ===");
-
         } catch (Exception e) {
             System.err.println("PNC 스크래핑 오류: " + e.getMessage());
             e.printStackTrace();
@@ -358,89 +354,45 @@ public class ScrapingService {
     }
     
    // ############PNIT
-    private List<VesselInfoDto> scrapePnitWithPlaywright(String keyword) {
-        List<VesselInfoDto> list = new ArrayList<>();
-        String searchWord = (keyword != null) ? keyword.trim() : "";
+   // 수정 전: Elements cols = row.select("td, th");
+// 수정 후: 데이터 행은 td만 가져오도록 변경
+Elements cols = row.select("td");
 
-        try (Playwright playwright = Playwright.create()) {
-            Browser browser = playwright.chromium().launch(
-                new BrowserType.LaunchOptions().setHeadless(true)
-            );
+if (cols.size() >= 5) { // 유효 데이터 컬럼 수 확인
+    String rowText = row.text().trim();
 
-            Page page = browser.newPage();
-
-            // System.out.println(">>> Playwright로 PNIT 페이지 접속 중...");
-            page.navigate("https://www.pnitl.com/infoservice/vessel/vslScheduleList.jsp");
-
-            page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
-            page.waitForTimeout(2000);
-
-            String htmlContent = page.content();
-            browser.close();
-
-            // Jsoup 파싱
-            Document doc = Jsoup.parse(htmlContent);
-            Elements rows = doc.select("tbody tr");
-            if (rows.isEmpty()) {
-                rows = doc.select("table tr");
-            }
-
-            // System.out.println(">>> PNIT 감지된 실제 행 개수: " + rows.size());
-
-            for (Element row : rows) {
-                Elements cols = row.select("td, th");
-
-                if (cols.size() >= 4) {
-                    String rowText = row.text().trim();
-
-                    // 안내문구 및 헤더 스킵
-                    if (rowText.contains("검색된") || rowText.contains("조회된") || rowText.contains("Total") || rowText.contains("접안예정일시")) {
-                        continue;
-                    }
-
-                    String berth = cols.get(0).text().trim();
-                    String shipName = "";
-                    String trCode = "";
-                    String eta = "";
-                    String etd = "";
-
-                    // 모든 셀을 순회하며 검색어가 포함된 셀을 선박명으로 판단
-                    for (int i = 0; i < cols.size(); i++) {
-                        String cellText = cols.get(i).text().trim();
-                        if (!searchWord.isEmpty() && cellText.toUpperCase().contains(searchWord.toUpperCase())) {
-                            shipName = cellText;
-                        }
-                    }
-
-                    // 검색어가 없는 전체 조회일 경우 기본 인덱스 매칭 (HPNT와 동일 표준 구조)
-                    if (shipName.isEmpty() && searchWord.isEmpty() && cols.size() >= 5) {
-                        shipName = cols.get(4).text().trim();
-                    }
-
-                    // TR 코드 및 날짜(ETA/ETD) 안전 추출
-                    if (cols.size() >= 10) {
-                        trCode = cols.get(2).text().trim();
-                        eta    = cols.get(8).text().trim();
-                        etd    = cols.get(9).text().trim();
-                    } else if (cols.size() >= 6) {
-                        trCode = cols.get(2).text().trim();
-                        eta    = cols.get(cols.size() - 2).text().trim();
-                        etd    = cols.get(cols.size() - 1).text().trim();
-                    }
-
-                    if (!shipName.isEmpty()) {
-                        list.add(new VesselInfoDto("PNIT", shipName, trCode, eta, etd, berth));
-                    }
-                }
-            }
-
-            // System.out.println("=== PNIT 파싱 결과 개수: " + list.size() + "개 ===");
-
-        } catch (Exception e) {
-            System.err.println("PNIT 스크래핑 오류: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        return list;
+    if (rowText.contains("검색된") || rowText.contains("조회된") || rowText.contains("Total") || rowText.contains("접안예정일시") || rowText.contains("모선명")) {
+        continue;
     }
+
+    String berth = cols.get(0).text().trim();
+    String trCode = cols.size() >= 3 ? cols.get(2).text().trim() : "";
+    String shipName = "";
+    String eta = "";
+    String etd = "";
+
+    // 전체 검색(스페이스) 시 안전하게 선명과 일정 추출
+    for (int i = 0; i < cols.size(); i++) {
+        String cellText = cols.get(i).text().trim();
+        if (!searchWord.isEmpty() && cellText.toUpperCase().contains(searchWord.toUpperCase())) {
+            shipName = cellText;
+        }
+    }
+
+    if (shipName.isEmpty() && cols.size() >= 5) {
+        shipName = cols.get(4).text().trim(); // 보통 4번 인덱스가 선명
+    }
+
+    if (cols.size() >= 10) {
+        eta = cols.get(8).text().trim();
+        etd = cols.get(9).text().trim();
+    } else if (cols.size() >= 6) {
+        eta = cols.get(cols.size() - 2).text().trim();
+        etd = cols.get(cols.size() - 1).text().trim();
+    }
+
+    if (!shipName.isEmpty() && !shipName.equals("선명")) {
+        list.add(new VesselInfoDto("PNIT", shipName, trCode, eta, etd, berth));
+    }
+}
 }
