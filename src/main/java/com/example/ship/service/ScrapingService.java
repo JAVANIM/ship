@@ -300,7 +300,7 @@ public class ScrapingService {
     // ############PNC
     
     
-  private List<VesselInfoDto> scrapePncWithPlaywright(String keyword) {
+ private List<VesselInfoDto> scrapePncWithPlaywright(String keyword) {
         List<VesselInfoDto> list = new ArrayList<>();
         String searchWord = (keyword != null) ? keyword.trim() : "";
 
@@ -315,40 +315,35 @@ public class ScrapingService {
             page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
             page.waitForTimeout(2000);
 
-            // 1. 검색어가 있으면 입력창에 타이핑
+            // 검색어가 있는 경우 입력창에 타이핑
             if (!searchWord.isEmpty()) {
                 if (page.querySelector("input[name='vslNm']") != null) {
                     page.fill("input[name='vslNm']", searchWord);
                 }
             }
 
-            // 2. ★ PNC는 접속 후 조회 버튼을 눌러야 데이터가 로드되므로 클릭 이벤트 추가
+            // 조회 버튼 클릭 또는 엔터
             try {
-                // PNC 조회 버튼 셀렉터 (버튼 아이디나 텍스트 기반 클릭)
                 if (page.querySelector("button:has-text('조회'), input[value='조회'], .btn_search") != null) {
                     page.click("button:has-text('조회'), input[value='조회'], .btn_search");
                 } else {
-                    // 버튼을 못 찾겠으면 엔터키 입력 시도
                     page.keyboard().press("Enter");
                 }
-                // 데이터가 로드될 때까지 충분히 대기
-                page.waitForTimeout(4000);
+                page.waitForTimeout(4000); // 데이터 로딩 대기
             } catch (Exception e) {
-                System.out.println("PNC 조회 버튼 클릭 중 예외 발생 (무시하고 진행): " + e.getMessage());
+                System.out.println("PNC 조회 버튼 클릭 예외: " + e.getMessage());
             }
 
             String htmlContent = page.content();
             browser.close();
 
-            // Jsoup 파싱
             Document doc = Jsoup.parse(htmlContent);
             Elements rows = doc.select("table tbody tr, table tr");
             System.out.println(">>> [PNC 디버깅] 감지된 행 개수: " + rows.size());
 
             for (Element row : rows) {
-                Elements cols = row.select("td");
+                Elements cols = row.select("td"); // th 제외하고 td만 추출
 
-                // 컬럼 수가 5개 이상이면 유효 데이터 행으로 인정 (조건 완화)
                 if (cols.size() >= 5) {
                     String shipName = cols.size() > 1 ? cols.get(1).text().trim() : ""; 
                     String trCode   = cols.size() > 2 ? cols.get(2).text().trim() : ""; 
