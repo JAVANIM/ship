@@ -2,6 +2,104 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <!-- 모바일 화면 크기에 맞게 자동 조절 (Viewport 설정) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>선박 및 터미널 검색</title>
+    <!-- 부트스트랩 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* 모바일에서 입력창과 버튼이 꽉 차고 터치하기 편하게 넉넉한 높이 부여 */
+        @media (max-width: 768px) {
+            body {
+                font-size: 16px; /* 모바일 기본 글자 크기 상향 */
+            }
+            .form-control, .form-select, .btn {
+                font-size: 1.1rem !important;
+                padding: 0.75rem 1rem !important; /* 터치 영역 확대 */
+            }
+            h2 {
+                font-size: 1.5rem;
+            }
+            table {
+                font-size: 0.9rem; /* 테이블 안의 텍스트가 모바일에서 잘리지 않도록 조정 */
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container my-4 px-3">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-10 col-lg-8"> <!-- 모바일에서는 화면 폭을 꽉 채우도록 수정 -->
+                <h2 class="text-center mb-4 fw-bold">터미널 선박 정보 검색</h2>
+                
+                <!-- 검색 폼 -->
+                <form action="/search" method="get" class="card p-3 p-md-4 shadow-sm border-0 rounded-4">
+                    <div class="row g-3">
+                        <!-- 카테고리 선택 드롭박스 -->
+                        <div class="col-12 col-md-4">
+                            <select name="terminal" class="form-select" required>
+                                <option value="" disabled selected>터미널 선택</option>
+                                <option value="BNCT">BNCT</option>
+                                <option value="DGT">DGT</option>
+                                <option value="HJNC">HJNC</option>
+                                <option value="HPNT">HPNT</option>
+                                <option value="PNC">PNC</option>
+                                <option value="PNIT">PNIT</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 검색어 입력창 -->
+                        <div class="col-12 col-md-6">
+                            <input type="text" name="keyword" class="form-control" placeholder="검색어(선박명 등) 입력" required>
+                        </div>
+                        
+                        <!-- 검색 버튼 -->
+                        <div class="col-12 col-md-2">
+                            <button type="submit" class="btn btn-primary w-100 py-2">검색</button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- 검색 결과 목록 영역 -->
+                <div class="mt-4" th:if="${results != null}">
+                    <h4 class="mb-3 fw-bold fs-5">검색 결과</h4>
+                    <div class="table-responsive card border-0 shadow-sm rounded-4 overflow-hidden">
+                        <table class="table table-bordered table-striped mb-0 text-center align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="py-3">터미널</th>
+                                    <th class="py-3">선명</th>
+                                    <th class="py-3">TR 정보</th>
+                                    <th class="py-3">ETA (입항)</th>
+                                    <th class="py-3">ETD (출항)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="info : ${results}">
+                                    <td class="py-3" th:text="${info.terminal}">BNCT</td>
+                                    <td class="py-3 fw-semibold" th:text="${info.shipName}">-</td>
+                                    <td class="py-3 fw-bold text-primary" th:text="${info.trCode}">-</td>
+                                    <td class="py-3 text-secondary small" th:text="${info.eta}">-</td>
+                                    <td class="py-3 text-secondary small" th:text="${info.etd}">-</td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(results)}">
+                                    <td colspan="5" class="text-center text-muted py-4">검색 결과가 없습니다.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+<!-- <!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
     <title>선박 및 터미널 검색</title>
     <!-- 부트스트랩 CSS (깔끔한 UI용) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -74,4 +172,4 @@
         </div>
     </div>
 </body>
-</html>
+</html> -->
