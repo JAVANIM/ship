@@ -1,14 +1,7 @@
-# 1단계: 빌드 스테이지
-FROM maven:3.9.6-eclipse-temurin-21 AS builder
-WORKDIR /build
-COPY pom.xml .
-COPY src ./src
-RUN mvn clean package -DskipTests
-
 # 2단계: 실행 스테이지
 FROM eclipse-temurin:21-jre-jammy
 
-# Playwright 브라우저 실행에 필요한 시스템 라이브러리 (필수 패키지 추가 완료)
+# Playwright 브라우저 실행에 필요한 시스템 라이브러리 (Webkit 필수 패키지 포함)
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libnss3 \
@@ -47,6 +40,21 @@ RUN apt-get update && apt-get install -y \
     libpangocairo-1.0-0 \
     libcairo-gobject2 \
     libgdk-pixbuf-2.0-0 \
+    # === [여기서부터 Webkit 구동용 추가 라이브러리] ===
+    libatomic1 \
+    libxslt1.1 \
+    libwoff2dec1 \
+    libvpx7 \
+    libevent-2.1-7 \
+    libwebpdemux2 \
+    libharfbuzz-icu0 \
+    libenchant-2-2 \
+    libsecret-1-0 \
+    libhyphen0 \
+    libmanette-0.2-0 \
+    libgles2-mesa \
+    libevent-core-2.1-7 \
+    # ===============================================
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
