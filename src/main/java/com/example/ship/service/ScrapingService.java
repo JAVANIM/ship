@@ -49,7 +49,7 @@ public class ScrapingService {
 
             Page page = browser.newPage();
 
-            System.out.println(">>> Playwright로 BNCT 페이지 접속 중...");
+            // System.out.println(">>> Playwright로 BNCT 페이지 접속 중...");
             page.navigate("https://info.bnctkorea.com/esvc/vessel/berthScheduleT");
 
             page.waitForTimeout(2000);
@@ -95,7 +95,7 @@ public class ScrapingService {
                 }
             }
 
-            System.out.println("=== 필터링 후 결과 개수: " + list.size() + "개 ===");
+            // System.out.println("=== 필터링 후 결과 개수: " + list.size() + "개 ===");
 
         } catch (Exception e) {
             System.err.println("Playwright 스크래핑 오류: " + e.getMessage());
@@ -115,7 +115,7 @@ public class ScrapingService {
 
             Page page = browser.newPage();
 
-            System.out.println(">>> Playwright로 DGT 페이지 접속 중...");
+            // System.out.println(">>> Playwright로 DGT 페이지 접속 중...");
             page.navigate("https://info.dgtbusan.com/DGT/esvc/vessel/berthScheduleT");
 
             page.waitForTimeout(2000);
@@ -161,7 +161,7 @@ public class ScrapingService {
                 }
             }
 
-            System.out.println("=== DGT 파싱 결과 개수: " + list.size() + "개 ===");
+            // System.out.println("=== DGT 파싱 결과 개수: " + list.size() + "개 ===");
 
         } catch (Exception e) {
             System.err.println("DGT 스크래핑 오류: " + e.getMessage());
@@ -187,7 +187,7 @@ public class ScrapingService {
 
             Page page = browser.newPage();
 
-            System.out.println(">>> Playwright로 HJNC 페이지 접속 중...");
+            // System.out.println(">>> Playwright로 HJNC 페이지 접속 중...");
             page.navigate("https://www.hjnc.co.kr/esvc/vessel/berthScheduleT");
 
             page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
@@ -228,7 +228,7 @@ public class ScrapingService {
                 }
             }
 
-            System.out.println("=== HJNC 파싱 결과 개수: " + list.size() + "개 ===");
+            // System.out.println("=== HJNC 파싱 결과 개수: " + list.size() + "개 ===");
 
         } catch (Exception e) {
             System.err.println("HJNC 스크래핑 오류: " + e.getMessage());
@@ -250,7 +250,7 @@ public class ScrapingService {
 
             Page page = browser.newPage();
 
-            System.out.println(">>> Playwright로 HPNT 페이지 접속 중...");
+            // System.out.println(">>> Playwright로 HPNT 페이지 접속 중...");
             page.navigate("https://www.hpnt.co.kr/infoservice/vessel/vslScheduleList.jsp");
 
             page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
@@ -272,7 +272,6 @@ public class ScrapingService {
                     String trCode   = cols.get(2).text().trim(); // 2번: 모선항차 / TR (MSEM001 등)
                     String shipName = cols.get(4).text().trim(); // 4번: 선명 (MSC EMMA 등)
                     
-                    // 8번과 9번 인덱스가 각각 진짜 접안일시(ETA)와 출항일시(ETD)입니다.
                     String eta      = cols.get(8).text().trim(); // 8번: 접안(예정)일시
                     String etd      = cols.get(9).text().trim(); // 9번: 출항(예정)일시
 
@@ -288,7 +287,7 @@ public class ScrapingService {
                 }
             }
 
-            System.out.println("=== HPNT 파싱 결과 개수: " + list.size() + "개 ===");
+            // System.out.println("=== HPNT 파싱 결과 개수: " + list.size() + "개 ===");
 
         } catch (Exception e) {
             System.err.println("HPNT 스크래핑 오류: " + e.getMessage());
@@ -312,7 +311,7 @@ public class ScrapingService {
 
             Page page = browser.newPage();
 
-            System.out.println(">>> Playwright로 PNC 페이지 접속 중...");
+            // System.out.println(">>> Playwright로 PNC 페이지 접속 중...");
             page.navigate("https://svc.pncport.com/info/CMS/Ship/Info.pnc?mCode=MN014");
 
             page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
@@ -348,7 +347,7 @@ public class ScrapingService {
                 }
             }
 
-            System.out.println("=== PNC 파싱 결과 개수: " + list.size() + "개 ===");
+            // System.out.println("=== PNC 파싱 결과 개수: " + list.size() + "개 ===");
 
         } catch (Exception e) {
             System.err.println("PNC 스크래핑 오류: " + e.getMessage());
@@ -370,7 +369,7 @@ public class ScrapingService {
 
             Page page = browser.newPage();
 
-            System.out.println(">>> Playwright로 PNIT 페이지 접속 중...");
+            // System.out.println(">>> Playwright로 PNIT 페이지 접속 중...");
             page.navigate("https://www.pnitl.com/infoservice/vessel/vslScheduleList.jsp");
 
             page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
@@ -386,7 +385,7 @@ public class ScrapingService {
                 rows = doc.select("table tr");
             }
 
-            System.out.println(">>> PNIT 감지된 실제 행 개수: " + rows.size());
+            // System.out.println(">>> PNIT 감지된 실제 행 개수: " + rows.size());
 
             for (Element row : rows) {
                 Elements cols = row.select("td, th");
@@ -435,7 +434,7 @@ public class ScrapingService {
                 }
             }
 
-            System.out.println("=== PNIT 파싱 결과 개수: " + list.size() + "개 ===");
+            // System.out.println("=== PNIT 파싱 결과 개수: " + list.size() + "개 ===");
 
         } catch (Exception e) {
             System.err.println("PNIT 스크래핑 오류: " + e.getMessage());
