@@ -95,7 +95,7 @@ public class ScrapingService {
                 }
             }
 
-            System.out.println("=== 필터링 후 결과 개수: " + list.size() + "개 ===");
+            // System.out.println("=== 필터링 후 결과 개수: " + list.size() + "개 ===");
 
         } catch (Exception e) {
             System.err.println("Playwright 스크래핑 오류: " + e.getMessage());
@@ -161,7 +161,7 @@ public class ScrapingService {
                 }
             }
 
-            System.out.println("=== DGT 파싱 결과 개수: " + list.size() + "개 ===");
+            // System.out.println("=== DGT 파싱 결과 개수: " + list.size() + "개 ===");
 
         } catch (Exception e) {
             System.err.println("DGT 스크래핑 오류: " + e.getMessage());
@@ -228,7 +228,7 @@ public class ScrapingService {
                 }
             }
 
-            System.out.println("=== HJNC 파싱 결과 개수: " + list.size() + "개 ===");
+            // System.out.println("=== HJNC 파싱 결과 개수: " + list.size() + "개 ===");
 
         } catch (Exception e) {
             System.err.println("HJNC 스크래핑 오류: " + e.getMessage());
@@ -266,7 +266,7 @@ public class ScrapingService {
             for (Element row : rows) {
                 Elements cols = row.select("td");
 
-                // HPNT 유효 데이터 행은 td가 10개 
+                // HPNT 유효 데이터 행은 td가 10개 이상입니다.
                 if (cols.size() >= 10) {
                     String berth    = cols.get(0).text().trim(); // 0번: 선석 (T3(S) 등)
                     String trCode   = cols.get(2).text().trim(); // 2번: 모선항차 / TR (MSEM001 등)
@@ -287,7 +287,7 @@ public class ScrapingService {
                 }
             }
 
-            System.out.println("=== HPNT 파싱 결과 개수: " + list.size() + "개 ===");
+            // System.out.println("=== HPNT 파싱 결과 개수: " + list.size() + "개 ===");
 
         } catch (Exception e) {
             System.err.println("HPNT 스크래핑 오류: " + e.getMessage());
@@ -347,7 +347,7 @@ public class ScrapingService {
                 }
             }
 
-            System.out.println("=== PNC 파싱 결과 개수: " + list.size() + "개 ===");
+             System.out.println("=== PNC 파싱 결과 개수: " + list.size() + "개 ===");
 
         } catch (Exception e) {
             System.err.println("PNC 스크래핑 오류: " + e.getMessage());
@@ -434,7 +434,7 @@ public class ScrapingService {
                 }
             }
 
-            System.out.println("=== PNIT 파싱 결과 개수: " + list.size() + "개 ===");
+            // System.out.println("=== PNIT 파싱 결과 개수: " + list.size() + "개 ===");
 
         } catch (Exception e) {
             System.err.println("PNIT 스크래핑 오류: " + e.getMessage());
