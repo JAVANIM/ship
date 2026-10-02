@@ -1,6 +1,19 @@
-# 2단계: 실행 스테이지
-FROM eclipse-temurin:21-jre-jammy AS builder
+# ==========================================
+# 1단계: 빌드 스테이지 (여기에 'AS builder'가 꼭 있어야 합니다!)
+# ==========================================
+FROM eclipse-temurin:21-jdk-jammy AS builder
+WORKDIR /build
 
+# 소스코드 복사 및 빌드 진행 (Gradle 또는 Maven 명령어에 맞춰 사용)
+COPY . .
+RUN ./gradlew bootJar 
+# (만약 래퍼가 없거나 메이븐이면 mvn clean package 등 사용하시는 빌드 명령어)
+
+
+# ==========================================
+# 2단계: 실행 스테이지
+# ==========================================
+FROM eclipse-temurin:21-jre-jammy
 
 # Playwright 브라우저 실행에 필요한 시스템 라이브러리 (Webkit 필수 패키지 포함)
 RUN apt-get update && apt-get install -y \
