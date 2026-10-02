@@ -300,7 +300,7 @@ public class ScrapingService {
     // ############PNC
     
     
-   private List<VesselInfoDto> scrapePncWithPlaywright(String keyword) {
+  private List<VesselInfoDto> scrapePncWithPlaywright(String keyword) {
         List<VesselInfoDto> list = new ArrayList<>();
         String searchWord = (keyword != null) ? keyword.trim() : "";
 
@@ -312,37 +312,40 @@ public class ScrapingService {
             Page page = browser.newPage();
             page.navigate("https://svc.pncport.com/info/CMS/Ship/Info.pnc?mCode=MN014");
 
-            // 테이블 로딩 대기
-            try {
-                page.waitForSelector("table tbody tr, table tr", new Page.WaitForSelectorOptions().setTimeout(10000));
-            } catch (Exception e) {
-                // 무시
+            page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
+            page.waitForTimeout(2000);
+
+            // ★ PNC 검색어 입력 로직 추가 (입력창이 존재할 경우 타이핑 후 엔터)
+            if (!searchWord.isEmpty()) {
+                // PNC 입력창 셀렉터 (보통 vslNm 이거나 검색 input)
+                if (page.querySelector("input[name='vslNm']") != null) {
+                    page.fill("input[name='vslNm']", searchWord);
+                    page.keyboard().press("Enter");
+                    page.waitForTimeout(3000); // 검색 결과 로딩 대기
+                } else if (page.querySelector("input[type='text']") != null) {
+                    // 만약 name이 다를 경우 첫 번째 텍스트 입력창 활용
+                    page.fill("input[type='text']", searchWord);
+                    page.keyboard().press("Enter");
+                    page.waitForTimeout(3000);
+                }
             }
-            page.waitForTimeout(3000);
 
             String htmlContent = page.content();
             browser.close();
 
+            // Jsoup 파싱
             Document doc = Jsoup.parse(htmlContent);
             Elements rows = doc.select("table tbody tr, table tr");
-            
-            System.out.println(">>> [PNC 디버깅] 감지된 전체 행 개수: " + rows.size());
 
             for (Element row : rows) {
-                Elements cols = row.select("td");
+                Elements cols = row.select("td"); // th 제외하고 td만 추출
 
-                // 디버깅용: 행의 텍스트가 비어있지 않다면 내용 출력해보기
-                if (!row.text().trim().isEmpty()) {
-                    System.out.println(">>> [PNC Row 텍스트]: " + row.text().trim() + " (td 개수: " + cols.size() + ")");
-                }
-
-                // 만약 컬럼 수가 10개가 안 되거나 다를 수 있으므로 조건을 낮춰서 확인
-                if (cols.size() >= 5) { 
-                    String shipName = cols.size() > 1 ? cols.get(1).text().trim() : ""; 
-                    String trCode   = cols.size() > 2 ? cols.get(2).text().trim() : ""; 
-                    String eta      = cols.size() > 7 ? cols.get(7).text().trim() : ""; 
-                    String etd      = cols.size() > 8 ? cols.get(8).text().trim() : ""; 
-                    String berth    = cols.size() > 9 ? cols.get(9).text().trim() : ""; 
+                if (cols.size() >= 10) {
+                    String shipName = cols.get(1).text().trim(); 
+                    String trCode   = cols.get(2).text().trim(); 
+                    String eta      = cols.get(7).text().trim(); 
+                    String etd      = cols.get(8).text().trim(); 
+                    String berth    = cols.get(9).text().trim(); 
 
                     if (!shipName.isEmpty() && !shipName.contains("모선명") && !shipName.contains("선명") 
                         && !shipName.contains("조회된") && !shipName.contains("Total")) {
@@ -354,7 +357,7 @@ public class ScrapingService {
                 }
             }
 
-            System.out.println("=== PNC 최종 파싱 결과 개수: " + list.size() + "개 ===")
+            System.out.println("=== PNC 최종 파싱 결과 개수: " + list.size() + "개 ===");
 
         } catch (Exception e) {
             System.err.println("PNC 스크래핑 오류: " + e.getMessage());
@@ -363,7 +366,6 @@ public class ScrapingService {
 
         return list;
     }
-    
    // ############PNIT
    // 수정 전: Elements cols = row.select("td, th");
 // 수정 후: 데이터 행은 td만 가져오도록 변경
