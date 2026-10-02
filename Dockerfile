@@ -1,5 +1,6 @@
 # 2단계: 실행 스테이지
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:21-jre-jammy AS builder
+
 
 # Playwright 브라우저 실행에 필요한 시스템 라이브러리 (Webkit 필수 패키지 포함)
 RUN apt-get update && apt-get install -y \
