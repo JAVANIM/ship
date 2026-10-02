@@ -315,19 +315,26 @@ public class ScrapingService {
             page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
             page.waitForTimeout(2000);
 
-            // ★ PNC 검색어 입력 로직 추가 (입력창이 존재할 경우 타이핑 후 엔터)
+            // 1. 검색어가 있으면 입력창에 타이핑
             if (!searchWord.isEmpty()) {
-                // PNC 입력창 셀렉터 (보통 vslNm 이거나 검색 input)
                 if (page.querySelector("input[name='vslNm']") != null) {
                     page.fill("input[name='vslNm']", searchWord);
-                    page.keyboard().press("Enter");
-                    page.waitForTimeout(3000); // 검색 결과 로딩 대기
-                } else if (page.querySelector("input[type='text']") != null) {
-                    // 만약 name이 다를 경우 첫 번째 텍스트 입력창 활용
-                    page.fill("input[type='text']", searchWord);
-                    page.keyboard().press("Enter");
-                    page.waitForTimeout(3000);
                 }
+            }
+
+            // 2. ★ PNC는 접속 후 조회 버튼을 눌러야 데이터가 로드되므로 클릭 이벤트 추가
+            try {
+                // PNC 조회 버튼 셀렉터 (버튼 아이디나 텍스트 기반 클릭)
+                if (page.querySelector("button:has-text('조회'), input[value='조회'], .btn_search") != null) {
+                    page.click("button:has-text('조회'), input[value='조회'], .btn_search");
+                } else {
+                    // 버튼을 못 찾겠으면 엔터키 입력 시도
+                    page.keyboard().press("Enter");
+                }
+                // 데이터가 로드될 때까지 충분히 대기
+                page.waitForTimeout(4000);
+            } catch (Exception e) {
+                System.out.println("PNC 조회 버튼 클릭 중 예외 발생 (무시하고 진행): " + e.getMessage());
             }
 
             String htmlContent = page.content();
@@ -336,16 +343,18 @@ public class ScrapingService {
             // Jsoup 파싱
             Document doc = Jsoup.parse(htmlContent);
             Elements rows = doc.select("table tbody tr, table tr");
+            System.out.println(">>> [PNC 디버깅] 감지된 행 개수: " + rows.size());
 
             for (Element row : rows) {
-                Elements cols = row.select("td"); // th 제외하고 td만 추출
+                Elements cols = row.select("td");
 
-                if (cols.size() >= 10) {
-                    String shipName = cols.get(1).text().trim(); 
-                    String trCode   = cols.get(2).text().trim(); 
-                    String eta      = cols.get(7).text().trim(); 
-                    String etd      = cols.get(8).text().trim(); 
-                    String berth    = cols.get(9).text().trim(); 
+                // 컬럼 수가 5개 이상이면 유효 데이터 행으로 인정 (조건 완화)
+                if (cols.size() >= 5) {
+                    String shipName = cols.size() > 1 ? cols.get(1).text().trim() : ""; 
+                    String trCode   = cols.size() > 2 ? cols.get(2).text().trim() : ""; 
+                    String eta      = cols.size() > 7 ? cols.get(7).text().trim() : ""; 
+                    String etd      = cols.size() > 8 ? cols.get(8).text().trim() : ""; 
+                    String berth    = cols.size() > 9 ? cols.get(9).text().trim() : ""; 
 
                     if (!shipName.isEmpty() && !shipName.contains("모선명") && !shipName.contains("선명") 
                         && !shipName.contains("조회된") && !shipName.contains("Total")) {
